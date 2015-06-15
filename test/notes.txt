@@ -1,0 +1,97 @@
+spies - 
+	records arguments, return value, the value of this, and exception thrown for all it's calls.  can be anonymous function or wrap existing function.
+
+test stub - 
+	functions (spies) with pre-programmed behavior.  They support the full test spy API in addition to methods that can be used to alter the stub's behavior.
+
+	anonymous or wrap existing functions like spies.
+
+function declarations
+	function myFunction(a, b) {
+		return a* b;
+	}
+function expressions
+	var x = function (a, b) {return a * b};
+
+Use stubs to:
+	Control a method's behavior from a test to force the code down a specific path.  
+		- forcing a method to throw an error in order to test error handling.
+	When you want to prevent a specific method from being called directly.  (because it triggers undesired behavior such as XMLHttpRequest or similar)
+
+Mocks (and mock expectations) are fake methods (like spies) with pre-programmed behavior (like stubs) as well as pre-programmedd expectations.  A mock will fail your test if it is not used as expected.
+
+	When to use mocks - for the unit under test.
+					  - in every unit test there should be one unit under test.
+					  - if you want to control how your unit is being used and like stating expectations upfront (as opposed to asserting after the fact), use a mock.
+
+	When not to use mocks - mocks come with built-in expectations that may fail 				   your test.  
+						  - they enforce implementation details.
+						  - if you wouldn't add an assertion for some specific call, don't mock it.  use a stub.
+						  - you should never have more than one mock in a single test.
+		mock = sinon.mock(obj)
+		mock.expects("method")
+		mock.restore();
+		mock.verify();
+
+	Expectations
+
+		All the expectation methods retun the expectation.  meaning you can chain them.
+
+		sinon.mock(jQuery).expects("ajax").atLeast(2).atMost(5);
+		jQuery.ajax.verify();
+
+Fake Timers - synchronous implementation of setTimeout and friends that Sinon.js can overwrite the global functions with to allow you to more easily test code using them.  Fake timers provide a clock object to pass time, which can also be used to control Date objects created through Date objects.
+
+	clock = sinon.useFakeTimers();
+	clock.restore();
+	clock.tick(510);
+	assertEquals("value", "height");
+
+Fake XMLHttpRequest
+	- retreive data from a url wihtout having to do a full page refresh.
+	- can be used to retrieve any type of data, not just xml, and supports protocols other than HTTP.
+
+	ActiveXObject - (for old versions of IE, like HTML Request Object)
+	
+	Provides a fake implementation of XMLHttpRequest and provides several interfaces for manipulating objects created by it.  Also fakes the native XMLHttpRequest and ActiveXObject.  Helps with testing requests made with XHR.
+
+	xhr = sinon.useFakeXMLHttpRequest();
+	requests = this.requests = [];
+	xhr.onCreate = function (xhr) {
+		requests.push(xhr);
+	}
+	// test function
+		var callback = sinon.spy();
+		myLib.getCommentsFor("/some/article", callback);
+		assertEquals(1, this.requests.length);
+		this.requests[0].respond(200, {"content-type": "application/json"},
+						'[{"id":12, "comment": "hey there"}]');
+		assert(callback.calledWith([{ id:12, comment: "hey there"}]));
+
+	api is:
+		sinon.useFakeXMLHttpRequest
+
+		var xhr = sinon.useFakeXMLHttpRequest();
+		xhr.onCreate = function (xhr) {};
+		xhr.restore();
+
+			Fake HTTPRequest
+			request.url
+			request.method
+			request.requestHeaders
+			request.requestBody
+			init request.status
+			etc.
+
+	Fake server
+		High-level API to manipulate 'FakeXMLHttpRequest' instances.
+		sinon.fakeServer.create();
+		... this.server.respondWith("GET", '/some/article/comments.json')
+
+JSON-P
+	- stub jQuery
+	sinon.stub(JQuery, "ajax");
+	sinon.assert.calledOnce(jQuery.ajax);
+
+Assertions...
+	
